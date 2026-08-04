@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BuildingBlocks\BuildingBlocks.csproj" />
+  <Project Path="PruebaPanMediator.csproj" />
+</Solution>
