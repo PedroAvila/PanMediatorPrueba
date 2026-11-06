@@ -1,14 +1,14 @@
 # PanMediatorPrueba
 
-Proyecto de prueba del uso de **PAN.Mediator** (v1.0.0), un mediador inmutable, ligero y nativo para CQRS y Arquitectura Hexagonal en .NET, diseñado como reemplazo de MediatR con paridad de superficie de API (`Send`/`Publish`, pipeline behaviors, `Unit`).
+Sample project demonstrating the use of **PAN.Mediator** (v1.0.0), an immutable, lightweight, and native mediator for CQRS and Hexagonal Architecture in .NET, designed as a MediatR replacement with API surface parity (`Send`/`Publish`, pipeline behaviors, `Unit`).
 
-Este proyecto muestra cómo integrar PAN.Mediator en una API ASP.NET Core 8 junto con FluentValidation (validación), Dapper (acceso a datos) y SQL Server.
+This project shows how to integrate PAN.Mediator into an ASP.NET Core 8 API together with FluentValidation (validation), Dapper (data access), and SQL Server.
 
-## Requisitos
+## Requirements
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- SQL Server local (por defecto en `localhost,1433`)
-- Paquetes NuGet principales:
+- Local SQL Server (default at `localhost,1433`)
+- Main NuGet packages:
   - `PAN.Mediator` 1.0.0
   - `FluentValidation` / `FluentValidation.AspNetCore`
   - `Mapster`
@@ -16,16 +16,16 @@ Este proyecto muestra cómo integrar PAN.Mediator en una API ASP.NET Core 8 junt
   - `Microsoft.Data.SqlClient`
   - `DotNetEnv`
 
-## Configuración inicial
+## Initial setup
 
-1. Clona o abre el proyecto.
-2. Configura la cadena de conexión en el archivo `.env` (raíz del proyecto):
+1. Clone or open the project.
+2. Configure the connection string in the `.env` file (project root):
 
    ```env
    DB_CONNECTION_STRING=Server=localhost,1433;Database=Prueba;User Id=sa;Password=TuPassword;TrustServerCertificate=True;
    ```
 
-3. Crea la base de datos y la tabla `Customers`:
+3. Create the database and the `Customers` table:
 
    ```sql
    CREATE DATABASE Prueba;
@@ -43,33 +43,33 @@ Este proyecto muestra cómo integrar PAN.Mediator en una API ASP.NET Core 8 junt
    );
    ```
 
-4. Ejecuta la aplicación:
+4. Run the application:
 
    ```bash
    dotnet restore
    dotnet run
    ```
 
-5. Abre Swagger en `https://localhost:<puerto>/swagger`.
+5. Open Swagger at `https://localhost:<port>/swagger`.
 
-## Estructura del proyecto
+## Project structure
 
-| Carpeta | Descripción |
+| Folder | Description |
 | --- | --- |
-| `BuildingBlocks/` | Proyecto bloque de construcción: abstracciones CQRS, pipeline behaviors, excepciones y utilidades. |
-| `BuildingBlocks/CQRS/` | Interfaces `ICommand`, `ICommandHandler`, `IQuery`, `IQueryHandler` (envuelven las abstracciones de PAN.Mediator). |
-| `BuildingBlocks/Behaviors/` | Pipeline behaviors: `LoggingBehavior` y `ValidationBehavior`. |
-| `BuildingBlocks/Exceptions/` | `BusinessException` y `CustomExceptionHandler` (RFC 7807 ProblemDetails). |
-| `Features/` | Handlers organizados por feature (`Customers`, `Orders`). |
-| `Controllers/` | Endpoints HTTP que envían commands/queries al mediador. |
-| `Repository/` | Acceso a datos con Dapper (`ICustomerRepository`, `CustomerRepository`). |
-| `Entities/` | Modelos de dominio (`Customer`). |
+| `BuildingBlocks/` | Building block project: CQRS abstractions, pipeline behaviors, exceptions, and utilities. |
+| `BuildingBlocks/CQRS/` | `ICommand`, `ICommandHandler`, `IQuery`, `IQueryHandler` interfaces (wrapping PAN.Mediator abstractions). |
+| `BuildingBlocks/Behaviors/` | Pipeline behaviors: `LoggingBehavior` and `ValidationBehavior`. |
+| `BuildingBlocks/Exceptions/` | `BusinessException` and `CustomExceptionHandler` (RFC 7807 ProblemDetails). |
+| `Features/` | Handlers organized by feature (`Customers`, `Orders`). |
+| `Controllers/` | HTTP endpoints that send commands/queries to the mediator. |
+| `Repository/` | Data access with Dapper (`ICustomerRepository`, `CustomerRepository`). |
+| `Entities/` | Domain models (`Customer`). |
 
-## Uso de PAN.Mediator
+## Using PAN.Mediator
 
-### 1. Registro del mediador
+### 1. Registering the mediator
 
-En `Program.cs` se registra el mediador indicando el assembly a escanear y los pipeline behaviors:
+In `Program.cs`, the mediator is registered by specifying the assembly to scan and the pipeline behaviors:
 
 ```csharp
 builder.Services.AddPanMediator(config =>
@@ -80,11 +80,11 @@ builder.Services.AddPanMediator(config =>
 });
 ```
 
-`RegisterServicesFromAssembly` registra automáticamente todos los handlers `IPanRequestHandler<,>` e `IPanNotificationHandler<>` del assembly.
+`RegisterServicesFromAssembly` automatically registers all `IPanRequestHandler<,>` and `IPanNotificationHandler<>` handlers in the assembly.
 
-### 2. Abstracciones CQRS propias
+### 2. Custom CQRS abstractions
 
-`BuildingBlocks` define sus propias interfaces que heredan de las de PAN.Mediator:
+`BuildingBlocks` defines its own interfaces that inherit from PAN.Mediator's:
 
 ```csharp
 // ICommand.cs
@@ -107,9 +107,9 @@ public interface IQueryHandler<in TQuery, TResponse> : IPanRequestHandler<TQuery
     where TResponse : notnull { }
 ```
 
-### 3. Command con validación (escribir)
+### 3. Command with validation (write)
 
-`Features/Customers/CreateCustomer.cs` define el command, su resultado, el validador de FluentValidation y el handler:
+`Features/Customers/CreateCustomer.cs` defines the command, its result, the FluentValidation validator, and the handler:
 
 ```csharp
 public record CreateCustomerCommand(string Name, string Address, string Phone)
@@ -147,9 +147,9 @@ public class CreateCustomerCommandHandler(ICustomerRepository customerRepository
 }
 ```
 
-### 4. Query (leer)
+### 4. Query (read)
 
-`Features/Orders/GetOrder.cs` define una query con su respuesta y handler:
+`Features/Orders/GetOrder.cs` defines a query with its response and handler:
 
 ```csharp
 public record OrderResponse(Guid Id, string CustomerName, decimal Amount);
@@ -163,9 +163,9 @@ public class GetOrderQueryHandler : IQueryHandler<GetOrderQuery, OrderResponse>
 }
 ```
 
-### 5. Enviar desde el controlador
+### 5. Sending from the controller
 
-El controller inyecta `IPanMediator` y usa `Send`:
+The controller injects `IPanMediator` and uses `Send`:
 
 ```csharp
 [ApiController]
@@ -187,29 +187,29 @@ public class CustomerController : ControllerBase
 
 ### 6. Pipeline behaviors
 
-- **`LoggingBehavior<TRequest, TResponse>`** — Registra el inicio/fin de cada request y advierte (warning) si tarda más de 3 segundos.
-- **`ValidationBehavior<TRequest, TResponse>`** — Ejecuta los validadores de FluentValidation registrados y lanza `ValidationException` si hay errores.
+- **`LoggingBehavior<TRequest, TResponse>`** — Logs the start/end of each request and warns if it takes longer than 3 seconds.
+- **`ValidationBehavior<TRequest, TResponse>`** — Runs the registered FluentValidation validators and throws `ValidationException` if there are errors.
 
-El orden de registro importa: el primer behavior registrado queda más "afuera" en la cadena. Aquí `LoggingBehavior` envuelve a `ValidationBehavior`, que envuelve al handler.
+Registration order matters: the first registered behavior ends up on the "outside" of the chain. Here `LoggingBehavior` wraps `ValidationBehavior`, which wraps the handler.
 
-### 7. Manejo de excepciones
+### 7. Exception handling
 
-`CustomExceptionHandler` traduce las excepciones a `ProblemDetails` (RFC 7807):
+`CustomExceptionHandler` translates exceptions into `ProblemDetails` (RFC 7807):
 
-- `ValidationException` → `400 Bad Request` (con detalle de errores).
-- `BusinessException` → el código de estado que indique la excepción.
-- Cualquier otra → `500 Internal Server Error`.
+- `ValidationException` → `400 Bad Request` (with error details).
+- `BusinessException` → the status code specified by the exception.
+- Anything else → `500 Internal Server Error`.
 
 ```csharp
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddProblemDetails();
 ```
 
-## Endpoints de ejemplo
+## Sample endpoints
 
 ### POST /api/Customer
 
-Crea un cliente y devuelve los datos creados:
+Creates a customer and returns the created data:
 
 ```http
 POST /api/Customer
@@ -222,7 +222,7 @@ Content-Type: application/json
 }
 ```
 
-Respuesta (HTTP 201):
+Response (HTTP 201):
 
 ```json
 {
@@ -233,4 +233,4 @@ Respuesta (HTTP 201):
 }
 ```
 
-Si la validación falla, responde HTTP 400 con `ProblemDetails` y la lista de errores en `ValidationErrors`.
+If validation fails, it responds with HTTP 400, `ProblemDetails`, and the list of errors in `ValidationErrors`.

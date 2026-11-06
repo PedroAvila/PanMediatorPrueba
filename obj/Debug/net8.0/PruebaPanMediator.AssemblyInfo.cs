@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PruebaPanMediator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fce1e10bebc9da4c295aeabc228f81b5cf497f49")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+adc0d53297374969f98cbb689ac36383d6bc6ee5")]
 [assembly: System.Reflection.AssemblyProductAttribute("PruebaPanMediator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PruebaPanMediator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
