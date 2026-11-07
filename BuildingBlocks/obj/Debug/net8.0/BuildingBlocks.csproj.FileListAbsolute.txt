@@ -23,3 +23,4 @@ D:\Net\PanMediatorPrueba\BuildingBlocks\bin\Debug\net8.0\BuildingBlocks.deps.jso
 D:\Net\PanMediatorPrueba\BuildingBlocks\bin\Debug\net8.0\BuildingBlocks.dll
 D:\Net\PanMediatorPrueba\BuildingBlocks\bin\Debug\net8.0\BuildingBlocks.pdb
 D:\Net\PanMediatorPrueba\BuildingBlocks\obj\Debug\net8.0\ref\BuildingBlocks.dll
+D:\Net\PanMediatorPrueba\BuildingBlocks\obj\Debug\net8.0\BuildingBlocks.sourcelink.json

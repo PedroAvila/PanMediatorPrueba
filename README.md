@@ -1,6 +1,6 @@
 # PanMediatorPrueba
 
-Sample project demonstrating the use of **PAN.Mediator** (v1.0.0), an immutable, lightweight, and native mediator for CQRS and Hexagonal Architecture in .NET, designed as a MediatR replacement with API surface parity (`Send`/`Publish`, pipeline behaviors, `Unit`).
+Sample project demonstrating the use of **PAN.Mediator** (v2.0.0), an immutable, lightweight, and native mediator for CQRS and Hexagonal Architecture in .NET, designed as a MediatR replacement with API surface parity (`Send`/`Publish`, pipeline behaviors, `Unit`).
 
 This project shows how to integrate PAN.Mediator into an ASP.NET Core 8 API together with FluentValidation (validation), Dapper (data access), and SQL Server.
 
@@ -9,7 +9,7 @@ This project shows how to integrate PAN.Mediator into an ASP.NET Core 8 API toge
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - Local SQL Server (default at `localhost,1433`)
 - Main NuGet packages:
-  - `PAN.Mediator` 1.0.0
+  - `PAN.Mediator` 2.0.0
   - `FluentValidation` / `FluentValidation.AspNetCore`
   - `Mapster`
   - `Dapper`
@@ -234,3 +234,222 @@ Response (HTTP 201):
 ```
 
 If validation fails, it responds with HTTP 400, `ProblemDetails`, and the list of errors in `ValidationErrors`.
+
+---
+
+## PAN.Mediator v2 implementation (`ValueTask`)
+
+The earlier sections were written for the original v1.0.0 sample and are kept for reference. The project now runs on PAN.Mediator **2.0.0**, which changed the contract of handlers and pipeline behaviors from `Task`/`Task<T>` to `ValueTask`/`ValueTask<T>`. The code below shows the current implementation.
+
+### Files changed for v2
+
+| File | Change |
+| --- | --- |
+| `BuildingBlocks/BuildingBlocks.csproj` | `PAN.Mediator` bumped from `1.0.0` to `2.0.0`. |
+| `BuildingBlocks/Behaviors/LoggingBehavior.cs` | `Handle` now returns `ValueTask<TResponse>`. |
+| `BuildingBlocks/Behaviors/ValidationBehavior.cs` | `Handle` now returns `ValueTask<TResponse>`; local typo `validationResuls` fixed to `validationResults`. |
+| `Features/Customers/CreateCustomer.cs` | `CreateCustomerCommandHandler.Handle` now returns `ValueTask<CreateCustomerResult>`. |
+| `Features/Orders/CreateOrder.cs` | `Handle` now returns `ValueTask<Guid>` and uses `ValueTask.FromResult`. |
+| `Features/Orders/GetOrder.cs` | `Handle` now returns `ValueTask<OrderResponse>` and uses `ValueTask.FromResult`. |
+
+### Package
+
+`BuildingBlocks/BuildingBlocks.csproj`:
+
+```xml
+<PackageReference Include="PAN.Mediator" Version="2.0.0" />
+```
+
+The 2.0.0 NuGet package also ships a Roslyn source generator that emits a compile-time dispatch chain for the concrete requests, falling back to reflection only for unknown request types.
+
+### Key change: `ValueTask`
+
+In v2, `PanRequestHandlerDelegate<TResponse>` returns `ValueTask<TResponse>`, `IPanPipelineBehavior<,>.Handle` returns `ValueTask<TResponse>`, and `IPanRequestHandler<,>.Handle` returns `ValueTask<TResponse>`:
+
+```csharp
+public delegate ValueTask<TResponse> PanRequestHandlerDelegate<TResponse>();
+
+public interface IPanPipelineBehavior<in TRequest, TResponse>
+{
+    ValueTask<TResponse> Handle(
+        TRequest request,
+        PanRequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken);
+}
+
+public interface IPanRequestHandler<in TRequest, TResponse>
+{
+    ValueTask<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
+}
+```
+
+### `ValidationBehavior` (v2)
+
+`BuildingBlocks/Behaviors/ValidationBehavior.cs`:
+
+```csharp
+using BuildingBlocks.CQRS;
+using FluentValidation;
+using PAN.Mediator.Abstractions;
+
+namespace BuildingBlocks.Behaviors
+{
+    public class ValidationBehavior<TRequest, TResponse>(
+        IEnumerable<IValidator<TRequest>> validators
+    ) : IPanPipelineBehavior<TRequest, TResponse>
+        where TRequest : ICommand<TResponse>
+    {
+        public async ValueTask<TResponse> Handle(
+            TRequest request,
+            PanRequestHandlerDelegate<TResponse> next,
+            CancellationToken cancellationToken
+        )
+        {
+            var context = new ValidationContext<TRequest>(request);
+
+            var validationResults = await Task.WhenAll(
+                validators.Select(v => v.ValidateAsync(context, cancellationToken))
+            );
+
+            var failures = validationResults
+                .Where(r => r.Errors.Any())
+                .SelectMany(r => r.Errors)
+                .ToList();
+
+            if (failures.Any())
+                throw new ValidationException(failures);
+
+            return await next();
+        }
+    }
+}
+```
+
+Because the generic constraint is `where TRequest : ICommand<TResponse>`, this behavior applies only to commands. PAN.Mediator skips it for queries (`IQuery<TResponse>`) without throwing. If queries should also be validated, change the constraint to `where TRequest : IPanRequest<TResponse>`.
+
+### `LoggingBehavior` (v2)
+
+`BuildingBlocks/Behaviors/LoggingBehavior.cs`:
+
+```csharp
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using PAN.Mediator.Abstractions;
+
+namespace BuildingBlocks.Behaviors
+{
+    public class LoggingBehavior<TRequest, TResponse>(
+        ILogger<LoggingBehavior<TRequest, TResponse>> logger
+    ) : IPanPipelineBehavior<TRequest, TResponse>
+        where TRequest : notnull, IPanRequest<TResponse>
+        where TResponse : notnull
+    {
+        public async ValueTask<TResponse> Handle(
+            TRequest request,
+            PanRequestHandlerDelegate<TResponse> next,
+            CancellationToken cancellationToken
+        )
+        {
+            logger.LogInformation(
+                "[START] Handle request={Request} - Response={Response} - RequestData={RequestData}",
+                typeof(TRequest).Name,
+                typeof(TResponse).Name,
+                request
+            );
+
+            var timer = new Stopwatch();
+            timer.Start();
+
+            var response = await next();
+
+            timer.Stop();
+            var timeTaken = timer.Elapsed;
+            if (timeTaken.TotalSeconds > 3)
+                logger.LogWarning(
+                    "[PERFORMANCE] The request {Request} took {TimeTaken} seconds.",
+                    typeof(TRequest).Name,
+                    timeTaken.Seconds
+                );
+
+            logger.LogInformation(
+                "[END] Handled {Request} with {Response}",
+                typeof(TRequest).Name,
+                typeof(TResponse).Name
+            );
+
+            return response;
+        }
+    }
+}
+```
+
+### Handlers (v2)
+
+Handlers must also return `ValueTask`/`ValueTask<T>`:
+
+```csharp
+public class CreateCustomerCommandHandler(ICustomerRepository customerRepository)
+    : ICommandHandler<CreateCustomerCommand, CreateCustomerResult>
+{
+    public async ValueTask<CreateCustomerResult> Handle(
+        CreateCustomerCommand command,
+        CancellationToken cancellationToken)
+    {
+        var customer = new Customer
+        {
+            Name = command.Name,
+            Address = command.Address,
+            Phone = command.Phone,
+        };
+
+        var id = await customerRepository.CreateAsync(customer);
+        return new CreateCustomerResult(id, customer.Name, customer.Address, customer.Phone);
+    }
+}
+```
+
+```csharp
+public class GetOrderQueryHandler : IQueryHandler<GetOrderQuery, OrderResponse>
+{
+    public ValueTask<OrderResponse> Handle(
+        GetOrderQuery query,
+        CancellationToken cancellationToken)
+        => ValueTask.FromResult(
+            new OrderResponse(query.OrderId, "Cliente de prueba", 99.99m));
+}
+```
+
+```csharp
+public class CreateOrderCommandHandler : ICommandHandler<CreateOrderCommand, Guid>
+{
+    public ValueTask<Guid> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
+    {
+        return ValueTask.FromResult(Guid.NewGuid());
+    }
+}
+```
+
+### Registration (v2)
+
+Registration is unchanged. The first registered behavior is the outermost one, so `LoggingBehavior` wraps `ValidationBehavior`, which wraps the handler:
+
+```csharp
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+builder.Services.AddPanMediator(config =>
+{
+    config.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    config.AddOpenBehavior(typeof(LoggingBehavior<,>));
+    config.AddOpenBehavior(typeof(ValidationBehavior<,>));
+});
+```
+
+### Migration checklist (v1 → v2)
+
+1. Update the `PAN.Mediator` package reference to `2.0.0`.
+2. Change every handler signature from `Task<T>` to `ValueTask<T>`.
+3. Change every pipeline behavior signature from `Task<TResponse>` to `ValueTask<TResponse>`.
+4. Replace `Task.FromResult(...)` with `ValueTask.FromResult(...)` where applicable.
+5. Keep the registration calls (`RegisterServicesFromAssembly`, `AddOpenBehavior`) exactly as they are.
+
+`dotnet build` passes with 0 errors and 0 warnings after these changes.

@@ -16,8 +16,8 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 
 public class CreateOrderCommandHandler : ICommandHandler<CreateOrderCommand, Guid>
 {
-    public Task<Guid> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
+    public ValueTask<Guid> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
     {
-        return Task.FromResult(Guid.NewGuid());
+        return ValueTask.FromResult(Guid.NewGuid());
     }
 }

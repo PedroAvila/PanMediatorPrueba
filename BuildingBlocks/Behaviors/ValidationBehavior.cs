@@ -9,7 +9,7 @@ namespace BuildingBlocks.Behaviors
     ) : IPanPipelineBehavior<TRequest, TResponse>
         where TRequest : ICommand<TResponse>
     {
-        public async Task<TResponse> Handle(
+        public async ValueTask<TResponse> Handle(
             TRequest request,
             PanRequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken
@@ -17,11 +17,11 @@ namespace BuildingBlocks.Behaviors
         {
             var context = new ValidationContext<TRequest>(request);
 
-            var validationResuls = await Task.WhenAll(
+            var validationResults = await Task.WhenAll(
                 validators.Select(v => v.ValidateAsync(context, cancellationToken))
             );
 
-            var failures = validationResuls
+            var failures = validationResults
                 .Where(r => r.Errors.Any())
                 .SelectMany(r => r.Errors)
                 .ToList();

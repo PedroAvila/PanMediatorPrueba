@@ -5,10 +5,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="11.11.0"/>
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0"/>
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0"/>
-    <PackageReference Include="Mapster" Version="7.4.0"/>
-    <PackageReference Include="PAN.Mediator" Version="1.0.0"/>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="Mapster" Version="7.4.0" />
+    <PackageReference Include="PAN.Mediator" Version="2.0.0" />
   </ItemGroup>
 </Project>

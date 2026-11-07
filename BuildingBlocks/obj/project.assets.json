@@ -89,7 +89,7 @@
           "buildTransitive/netcoreapp3.1/_._": {}
         }
       },
-      "PAN.Mediator/1.0.0": {
+      "PAN.Mediator/2.0.0": {
         "type": "package",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0"
@@ -218,18 +218,19 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "PAN.Mediator/1.0.0": {
-      "sha512": "voBT9C+535VndhOBwwRRLRUmwXgPgOHLrljXIAzrQ/7loTpO/54y47AkG3tC80ls46C4mj0tpa0DdTQBeog+cQ==",
+    "PAN.Mediator/2.0.0": {
+      "sha512": "M6Nixqjw3EUeG14VN4mn0sfJR8yatBNrbr7D+5NlrzOSGmu6wU+4vuTNOVz2l80S3SRgn+Nx96NvDQDoxAgYYQ==",
       "type": "package",
-      "path": "pan.mediator/1.0.0",
+      "path": "pan.mediator/2.0.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "README.md",
+        "analyzers/dotnet/cs/PAN.Mediator.SourceGenerators.dll",
         "lib/net6.0/PAN.Mediator.dll",
         "lib/net8.0/PAN.Mediator.dll",
         "lib/netstandard2.0/PAN.Mediator.dll",
-        "pan.mediator.1.0.0.nupkg.sha512",
+        "pan.mediator.2.0.0.nupkg.sha512",
         "pan.mediator.nuspec"
       ]
     }
@@ -240,7 +241,7 @@
       "FluentValidation.AspNetCore >= 11.3.0",
       "FluentValidation.DependencyInjectionExtensions >= 11.11.0",
       "Mapster >= 7.4.0",
-      "PAN.Mediator >= 1.0.0"
+      "PAN.Mediator >= 2.0.0"
     ]
   },
   "packageFolders": {
@@ -250,11 +251,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Net\\PanMediatorPrueba\\BuildingBlocks\\BuildingBlocks.csproj",
+      "projectUniqueName": "d:\\Net\\PanMediatorPrueba\\BuildingBlocks\\BuildingBlocks.csproj",
       "projectName": "BuildingBlocks",
-      "projectPath": "D:\\Net\\PanMediatorPrueba\\BuildingBlocks\\BuildingBlocks.csproj",
+      "projectPath": "d:\\Net\\PanMediatorPrueba\\BuildingBlocks\\BuildingBlocks.csproj",
       "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "D:\\Net\\PanMediatorPrueba\\BuildingBlocks\\obj\\",
+      "outputPath": "d:\\Net\\PanMediatorPrueba\\BuildingBlocks\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -313,7 +314,7 @@
           },
           "PAN.Mediator": {
             "target": "Package",
-            "version": "[1.0.0, )"
+            "version": "[2.0.0, )"
           }
         },
         "imports": [

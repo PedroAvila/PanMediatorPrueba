@@ -23,7 +23,7 @@ public class CreateCustomerCommandValidator : AbstractValidator<CreateCustomerCo
 public class CreateCustomerCommandHandler(ICustomerRepository customerRepository)
     : ICommandHandler<CreateCustomerCommand, CreateCustomerResult>
 {
-    public async Task<CreateCustomerResult> Handle(
+    public async ValueTask<CreateCustomerResult> Handle(
         CreateCustomerCommand command,
         CancellationToken cancellationToken
     )

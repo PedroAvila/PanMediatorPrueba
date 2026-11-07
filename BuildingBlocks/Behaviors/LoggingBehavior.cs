@@ -10,7 +10,7 @@ namespace BuildingBlocks.Behaviors
         where TRequest : notnull, IPanRequest<TResponse>
         where TResponse : notnull
     {
-        public async Task<TResponse> Handle(
+        public async ValueTask<TResponse> Handle(
             TRequest request,
             PanRequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken
